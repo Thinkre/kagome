@@ -1,0 +1,49 @@
+# varialbles for computing
+jobname=$0
+f90=$0.f90
+input='log'
+comm="$f90 -I$LIB -L$LIB -lbootstrap"
+
+dir1=run
+
+# check the directory if existed
+if [ ! -d $dir1 ]; then
+  mkdir $dir1
+fi
+if [ ! -d $dir2 ]; then
+  mkdir $dir2
+fi
+
+# copy *.f90 to and change into Run directory
+cp * ./$dir1/
+cd $dir1
+ifort $comm
+
+# compile fortran with different variables and save data to Data directory
+for i in {1..1} 
+do
+  var=$i
+  out=$var.out
+  in=$var.in
+  job=$var.job
+  data=$var.dat
+
+  cp a.out $out
+  # sed -n ${l}p input
+  echo "$var $(sed -n ${i}p $input)">>$in
+  dir2=($in)
+  
+  cp $in log ../$dir2/
+  cat $in>>../log
+  
+  echo '#PBS -N ' $var>$job
+  echo '#PBS -m be'>>$job
+  echo 'date'>>$job
+  echo 'cd $PBS_O_WORKDIR'>>$job
+  echo "./$out<$in>>../$dir2/$data">>$job
+  echo 'echo "job finished at" date'>>$job
+
+  qsub $job 
+  # ./$out<$in>>../$dir2/$data
+  sleep 2
+done
